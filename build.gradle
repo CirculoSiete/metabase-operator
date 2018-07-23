@@ -1,14 +1,109 @@
-plugins {
-    id 'java-library'
-    id 'idea'
+buildscript {
+  repositories {
+    jcenter()
+    mavenCentral()
+    mavenLocal()
+    maven { url "https://plugins.gradle.org/m2/" }
+  }
+  dependencies {
+    classpath "com.github.jengelman.gradle.plugins:shadow:2.0.4"
+    classpath "io.spring.gradle:dependency-management-plugin:1.0.5.RELEASE"
+    classpath "net.ltgt.gradle:gradle-apt-plugin:0.17"
+    classpath 'com.bmuschko:gradle-docker-plugin:3.4.4'
+  }
 }
 
-dependencies {
-    api 'io.fabric8:kubernetes-client:4.0.3'
+version "0.1-SNAPSHOT"
+group "metabase-eperator"
 
-    testImplementation 'junit:junit:4.12'
+apply plugin: "io.spring.dependency-management"
+apply plugin: "com.github.johnrengelman.shadow"
+apply plugin: "application"
+apply plugin: 'groovy'
+apply plugin: "net.ltgt.apt-eclipse"
+apply plugin: "net.ltgt.apt-idea"
+apply plugin: 'jacoco'
+apply plugin: com.bmuschko.gradle.docker.DockerRemoteApiPlugin
+
+dependencies {
+  //WARN: It's very important to preserve this order (https://github.com/micronaut-projects/micronaut-core/issues/218#issuecomment-392549294)
+  compileOnly 'org.projectlombok:lombok:1.18.0'
+  annotationProcessor "org.projectlombok:lombok:1.18.0"
+  annotationProcessor "io.micronaut:inject-java"
+  compile "io.micronaut:http-client"
+  compile "io.micronaut:http-server-netty"
+  compile "io.micronaut:inject"
+  compile "io.micronaut:runtime"
+  compile 'commons-io:commons-io:2.5'
+  compile 'io.reactivex:rxnetty-http:0.5.3-rc.1'
+  compile "io.micronaut:management"
+  compile "io.micronaut:tracing"
+  compile 'io.jaegertracing:jaeger-core:0.29.0'
+  compileOnly "io.micronaut:inject-java"
+  compileOnly "org.codehaus.groovy:groovy-all:2.5.0"
+  compile 'io.fabric8:kubernetes-client:4.0.3'
+
+  runtime "ch.qos.logback:logback-classic:1.2.3"
+  testCompile "junit:junit:4.12"
+  testCompile "io.micronaut:inject-java"
+  testCompile "org.codehaus.groovy:groovy-all:2.5.0"
+  testCompile "org.spockframework:spock-core:1.1-groovy-2.4", {
+    exclude module: 'groovy-all'
+  }
 }
 
 repositories {
-    jcenter()
+  jcenter()
+  mavenLocal()
+  mavenCentral()
+  maven { url "https://jcenter.bintray.com" }
 }
+
+dependencyManagement {
+  imports {
+    mavenBom 'io.micronaut:bom:1.0.0.M3'
+  }
+}
+
+shadowJar {
+  mergeServiceFiles()
+}
+
+mainClassName = "com.circulosiete.k8s.operator.metabase.MetabaseOperatorApplication"
+
+compileJava.options.compilerArgs += '-parameters'
+compileTestJava.options.compilerArgs += '-parameters'
+
+jacocoTestReport.dependsOn check
+
+jacocoTestReport {
+  //We are running on Continuos Integration environment
+  def ci = System.getenv('CI') == "true"
+  reports {
+    xml.enabled ci
+    html.enabled !ci
+  }
+}
+
+task createDockerfile(type: com.bmuschko.gradle.docker.tasks.image.Dockerfile) {
+  destFile = project.file('build/libs/Dockerfile')
+  from 'openjdk:8u171-jre-alpine3.8'
+  maintainer 'Domingo Suarez "domingo.suarez@gmail.com"'
+  copyFile "metabase-operator-${ project.version }-all.jar", '/opt/service.jar'
+
+  exposePort 8080
+  entryPoint 'java', "-Djava.awt.headless=true", "-Xms64m", "-Xmx64m", '-jar', '/opt/service.jar'
+}
+
+task buildImage(type: com.bmuschko.gradle.docker.tasks.image.DockerBuildImage) {
+  dependsOn createDockerfile
+  inputDir = createDockerfile.destFile.parentFile
+  tag = 'circulo7/metabase-operator:' + project.version.toLowerCase()
+}
+
+task pushImage(type: com.bmuschko.gradle.docker.tasks.image.DockerPushImage) {
+  dependsOn buildImage
+  imageName = buildImage.tag
+}
+
+createDockerfile.dependsOn assemble
