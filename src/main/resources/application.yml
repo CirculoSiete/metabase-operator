@@ -1,0 +1,8 @@
+micronaut:
+  application:
+    name: metabase-operator
+  server:
+    port: 8080
+#tracing:
+#  jaeger:
+#    enabled: true
