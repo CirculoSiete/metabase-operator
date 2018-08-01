@@ -42,6 +42,7 @@ dependencies {
   compileOnly "io.micronaut:inject-java"
   compileOnly "org.codehaus.groovy:groovy-all:2.5.0"
   compile 'io.fabric8:kubernetes-client:4.0.3'
+  //compile 'io.kubernetes:client-java:2.0.0'
 
   runtime "ch.qos.logback:logback-classic:1.2.3"
   testCompile "junit:junit:4.12"
