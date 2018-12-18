@@ -29,24 +29,24 @@ dependencies {
   //WARN: It's very important to preserve this order (https://github.com/micronaut-projects/micronaut-core/issues/218#issuecomment-392549294)
   compileOnly 'org.projectlombok:lombok:1.18.0'
   annotationProcessor "org.projectlombok:lombok:1.18.0"
-  annotationProcessor "io.micronaut:inject-java"
-  compile "io.micronaut:http-client"
-  compile "io.micronaut:http-server-netty"
-  compile "io.micronaut:inject"
-  compile "io.micronaut:runtime"
+  annotationProcessor "io.micronaut:micronaut-inject-java"
+  compile "io.micronaut:micronaut-http-client"
+  compile "io.micronaut:micronaut-http-server-netty"
+  compile "io.micronaut:micronaut-inject"
+  compile "io.micronaut:micronaut-runtime"
   compile 'commons-io:commons-io:2.5'
   compile 'io.reactivex:rxnetty-http:0.5.3-rc.1'
-  compile "io.micronaut:management"
-  compile "io.micronaut:tracing"
+  compile "io.micronaut:micronaut-management"
+  compile "io.micronaut:micronaut-tracing"
   compile 'io.jaegertracing:jaeger-core:0.29.0'
-  compileOnly "io.micronaut:inject-java"
+  compileOnly "io.micronaut:micronaut-inject-java"
   compileOnly "org.codehaus.groovy:groovy-all:2.5.0"
   compile 'io.fabric8:kubernetes-client:4.0.3'
   //compile 'io.kubernetes:client-java:2.0.0'
 
   runtime "ch.qos.logback:logback-classic:1.2.3"
   testCompile "junit:junit:4.12"
-  testCompile "io.micronaut:inject-java"
+  testCompile "io.micronaut:micronaut-inject-java"
   testCompile "org.codehaus.groovy:groovy-all:2.5.0"
   testCompile "org.spockframework:spock-core:1.1-groovy-2.4", {
     exclude module: 'groovy-all'
@@ -62,7 +62,7 @@ repositories {
 
 dependencyManagement {
   imports {
-    mavenBom 'io.micronaut:bom:1.0.0.M3'
+    mavenBom 'io.micronaut:micronaut-bom:1.0.2'
   }
 }
 
